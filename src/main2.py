@@ -1,15 +1,12 @@
-import pygame, math
+import pygame
 from sys import exit
 from config_2 import *
 from pygame.locals import *
-from player import Personaje
 from sprite_sheet import *
 from fondos import *
 from personaje_salto import PersonajeSaltando
 from plataforma import Plataforma
 from enemigos import Enemigo
-
-
 
 class Juego:
     def __init__(self):
@@ -43,14 +40,14 @@ class Juego:
                 "jump_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Jump.png").convert_alpha()),
                 "jump_izquierda": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Jump_izquierda.png").convert_alpha()),
                 "muerte": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Death.png").convert_alpha())}
-        self.player = PersonajeSaltando(self.player_group, self.personaje_caballero_sprites, 10, 120, 80)
+        self.player = PersonajeSaltando(self.player_group, self.personaje_caballero_sprites, VELOCIDAD, 120, 80)
         self.enemigo_1 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 2, 120, 80, 9, self.all_plataformas.sprites()[1])
         self.enemigo_2 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 7, 120, 80, 0, self.all_plataformas.sprites()[3])
         self.enemigo_3 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 7, 120, 80, 0, self.all_plataformas.sprites()[5])
         self.player.rect.topleft = (CENTRO_PANTALLA_X - 60, HEIGHT - 80)
         self.posicion_y_pantalla = -600
         self.bandera = False
-        
+        self.disparo_habilitado = True
 
     def run(self):
         esta_jugando = True
@@ -63,6 +60,16 @@ class Juego:
                 elif evento.type == KEYDOWN:
                     if evento.key == K_ESCAPE:
                         esta_jugando = False
+                    elif evento.key == K_d:
+                        if self.player.direccion:
+                            x, y = self.player.rect_mov.midright
+                        else:
+                            x, y = self.player.rect_mov.midleft
+                        self.player.disparar(x, y)
+                        self.disparo_habilitado = False  # Deshabilitar el disparo cuando se presiona la tecla
+                    elif evento.type == KEYUP:
+                        if evento.key == K_d:
+                            self.disparo_habilitado = True
 
             self.update()
 
@@ -85,13 +92,11 @@ class Juego:
             self.player.detecta_colisiones_ataque(self.enemigos_group)
 
         if self.player.rect.top <= 100 and not self.posicion_y_pantalla == 0:
-            self.player.cayendo = True
             self.posicion_y_pantalla += VELOCIDAD_FONDO
             Plataforma.ajustar_posicion_y(VELOCIDAD_FONDO, self.plataformas)
             Enemigo.ajustar_posicion_y_enemigo([self.enemigo_1, self.enemigo_2, self.enemigo_3], VELOCIDAD_FONDO)
 
         elif self.player.rect.bottom == HEIGHT and not self.posicion_y_pantalla == -600:
-            self.player.cayendo = False
             self.posicion_y_pantalla -= VELOCIDAD_FONDO
             Plataforma.ajustar_posicion_y_resta(VELOCIDAD_FONDO, self.plataformas)
             Enemigo.ajustar_posicion_y_resta_enemigo([self.enemigo_1, self.enemigo_2, self.enemigo_3], VELOCIDAD_FONDO)
@@ -101,24 +106,42 @@ class Juego:
             self.player.contador_frames = (self.player.contador_frames + 1) % self.player.cantidad_frames
             self.enemigo_1.contador_frames = (self.enemigo_1.contador_frames + 1) % self.enemigo_1.cantidad_frames
 
-        print(self.player.contador_frames)
+        if self.disparo_habilitado:  # Verificar si el disparo está habilitado antes de permitir un nuevo disparo
+            if keys[K_d]:
+                x, y = self.player.rect_mov.midtop
+                self.player.disparar(x, y)
+        
         self.player.detecta_colisiones_enemigos(self.enemigos_group)
         self.all_plataformas.update()
         self.enemigos_group.update()
         self.player_group.update()
+        
 
     def draw(self):
         
         self.pantalla.blit(self.imagen_fondo,(0,self.posicion_y_pantalla))    
-        pygame.draw.rect(self.pantalla, rojo, self.enemigo_1.rect_golpe)    
+        pygame.draw.rect(self.pantalla, rojo, self.enemigo_1.rect_golpe)
         
         mostrar_texto(self.pantalla, str(self.player.vida), (50,50), negro)
         mostrar_texto(self.pantalla, str(self.player.puntaje), (50,100), negro)
         
+        print(len(self.player.lista_disparo))
+        if len(self.player.lista_disparo) > 0:
+            for x in self.player.lista_disparo:
+                rec_right = (x.rect.right)
+                rec_left = (x.rect.left)
+                per_right = (self.player.rect_mov.right)
+                per_lefto = (self.player.rect_mov.left)
+                print(x.rect.left)
+                x.draw(self.pantalla)
+                x.trayectoria()
+                if rec_right > per_right + 100 or rec_left < per_lefto - 100:
+                    self.player.lista_disparo.remove(x)  
+                    
         self.all_plataformas.draw(self.pantalla) 
         self.enemigos_group.draw(self.pantalla)
         self.player.draw(self.pantalla)
-    
+        
         for plataforma in self.all_plataformas:
             plataforma.mover_verticalmente()
             plataforma.draw(self.pantalla)

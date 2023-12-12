@@ -1,6 +1,7 @@
 import pygame
 from pygame import * 
 from config_2 import *
+from proyectil import Proyectil
 
 class Personaje(pygame.sprite.Sprite):
     def __init__(self, groups, sprite, velocidad, ancho, alto):
@@ -20,6 +21,7 @@ class Personaje(pygame.sprite.Sprite):
         self.rect_mov = pygame.Rect(300, 300, 25, 35)
         self.tiempo_espera_despues_muerte = 1000
         self.muerte_tiempo_inicial = 0  
+        self.lista_disparo = []
     
     
     def update(self):
@@ -28,7 +30,6 @@ class Personaje(pygame.sprite.Sprite):
         self.mascara = pygame.mask.from_surface(self.imagen_caballero)
         self.movimientos()
         self.atacar()
-        self.muerte()
         super().update()
     
     def draw(self, pantalla):
@@ -79,17 +80,15 @@ class Personaje(pygame.sprite.Sprite):
                 enemigo.kill()
                 self.puntaje += 10
 
-    def muerte (self, ):
-        self.muerte_tiempo_inicial = time.time()
+    def disparar(self, x, y):
+        if self.direccion:
+            x += 10  
+        else:
+            x -= 10
+        self.miproyectil = Proyectil(x, y, self.direccion)
+        self.lista_disparo.append(self.miproyectil)
 
-        # Espera el tiempo especificado después de la muerte
-        time.sleep(self.tiempo_espera_despues_muerte)
 
-        # Verifica si ha pasado suficiente tiempo después de la muerte
-        tiempo_actual = time.time()
-        tiempo_transcurrido_despues_muerte = tiempo_actual - self.muerte_tiempo_inicial
 
-        if tiempo_transcurrido_despues_muerte >= self.tiempo_espera_despues_muerte:
-            # Realiza el kill después de 2 segundos
-            self.kill()
+        
 

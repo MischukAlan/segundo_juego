@@ -5,7 +5,7 @@ class SpriteSheet:
     def __init__(self, hoja_sprite):
         self.hoja = hoja_sprite
 
-    def get_imagen(self, frame, width, height, flip):
+    def get_imagen(self, frame, width, height, flip = None):
         total_ancho_sprites = self.hoja.get_width()
         cantidad_frames = total_ancho_sprites // width
         imagen = pygame.Surface((width, height), pygame.SRCALPHA)
