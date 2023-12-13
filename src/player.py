@@ -4,7 +4,7 @@ from config_2 import *
 from proyectil import Proyectil
 
 class Personaje(pygame.sprite.Sprite):
-    def __init__(self, groups, sprite, velocidad, ancho, alto):
+    def __init__(self, groups, sprite, velocidad, ancho, alto, pantalla):
         super().__init__(groups)
         self.diccionario_sprites = {"idle_derecha": sprite["idle_derecha"],"idle_izquierda": sprite["idle_izquierda"], "run_derecha": sprite["run_derecha"], "run_izquierda": sprite["run_izquierda"], "ataque_derecha": sprite["ataque_derecha"], "ataque_izquierda": sprite["ataque_izquierda"], "jump_derecha": sprite["jump_derecha"], "jump_izquierda": sprite["jump_izquierda"], "muerte": sprite["muerte"]}
         self.contador_frames = 0
@@ -22,6 +22,10 @@ class Personaje(pygame.sprite.Sprite):
         self.tiempo_espera_despues_muerte = 1000
         self.muerte_tiempo_inicial = 0  
         self.lista_disparo = []
+        self.velocidad_vertical = 0
+        self.esta_saltando = False 
+        self.pantalla = pantalla
+        
     
     
     def update(self):
@@ -30,6 +34,15 @@ class Personaje(pygame.sprite.Sprite):
         self.mascara = pygame.mask.from_surface(self.imagen_caballero)
         self.movimientos()
         self.atacar()
+        for proyectil in self.lista_disparo:
+            proyectil.update()
+            proyectil.draw(self.pantalla)
+            self.lista_disparo = [proyectil for proyectil in self.lista_disparo if proyectil.rect.x < WIDTH]
+        self.velocidad_vertical += GRAVEDAD
+        self.rect.y += self.velocidad_vertical
+        if self.rect.bottom >= HEIGHT:
+            self.rect.bottom = HEIGHT
+            self.velocidad_vertical = 0 
         super().update()
     
     def draw(self, pantalla):
@@ -41,13 +54,13 @@ class Personaje(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[K_RIGHT]:
             self.imagen_actual = self.diccionario_sprites["run_derecha"]
-            if self.rect.right <= WIDTH:
+            if self.rect.right <= WIDTH - 150:
                 self.rect.x += self.velocidad
                 self.direccion = True
             
         elif keys[K_LEFT]:
             self.imagen_actual = self.diccionario_sprites["run_izquierda"]
-            if self.rect.x >= 0:
+            if self.rect.x >= 150:
                 self.rect.x -= self.velocidad
                 self.direccion = False
         else:
@@ -80,15 +93,14 @@ class Personaje(pygame.sprite.Sprite):
                 enemigo.kill()
                 self.puntaje += 10
 
+
     def disparar(self, x, y):
         if self.direccion:
-            x += 10  
+            x += 10
         else:
             x -= 10
-        self.miproyectil = Proyectil(x, y, self.direccion)
-        self.lista_disparo.append(self.miproyectil)
+        proyectil = Proyectil(x, y, self.direccion)
+        self.lista_disparo.append(proyectil)
 
-
-
-        
-
+    def salto(self):
+        self.velocidad_vertical = -17
