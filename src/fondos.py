@@ -1,6 +1,12 @@
 import pygame
+from pygame.locals import *
 from config_2 import *
 
-class piso:
-    def __init__(self, x, y, whidht_piso, height_piso, pantalla) -> None:
-        self.piso = pygame.draw.rect(pantalla, (30,30,30), pygame.Rect(x , y, whidht_piso, height_piso))
+
+class bg_pisos():
+    def __init__(self, x_pos, y_pos, imagen, cantidad) -> None:
+        self.image = imagen
+        self.correccion = self.image.get_width()
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+        self.cantidad = cantidad

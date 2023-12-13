@@ -31,12 +31,23 @@ class Plataforma (pygame.sprite.Sprite):
     @classmethod
     def ajustar_posicion_y(cls, velocidad, lista_plataformas):
         for plataforma in lista_plataformas:
-            plataforma.rect.y += velocidad
+            plataforma.rect.right += velocidad
 
     @classmethod
     def ajustar_posicion_y_resta(cls, velocidad, lista_plataformas):
         for plataforma in lista_plataformas:
             plataforma.rect.y -= velocidad
+
+
+    @classmethod
+    def ajustar_posicion_X_plataforma(cls, lista_plataformas,  velocidad):
+            for plataforma in lista_plataformas:
+                plataforma.rect.left += velocidad
+
+    @classmethod
+    def ajustar_posicion_X_resta_plataforma(cls, lista_plataformas, velocidad):
+            for plataforma in lista_plataformas:
+                plataforma.rect.right -= velocidad
 
 
     def colisiones_plataformas(self, player, grupo_plataformas):
