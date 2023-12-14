@@ -25,6 +25,7 @@ class Personaje(pygame.sprite.Sprite):
         self.velocidad_vertical = 0
         self.esta_saltando = False 
         self.pantalla = pantalla
+        self.habilidad = False
         
     
     
@@ -32,21 +33,24 @@ class Personaje(pygame.sprite.Sprite):
         self.rect_mov.midbottom = self.rect.midbottom
         self.imagen_caballero, self.cantidad_frames = self.imagen_actual.get_imagen(self.contador_frames, 120, 80, self.direccion)
         self.mascara = pygame.mask.from_surface(self.imagen_caballero)
+        self.rect = self.imagen_caballero.get_rect(topleft=self.rect.topleft)
         self.movimientos()
         self.atacar()
         for proyectil in self.lista_disparo:
             proyectil.update()
             proyectil.draw(self.pantalla)
             self.lista_disparo = [proyectil for proyectil in self.lista_disparo if proyectil.rect.x < WIDTH]
+
         self.velocidad_vertical += GRAVEDAD
         self.rect.y += self.velocidad_vertical
+
         if self.rect.bottom >= HEIGHT:
             self.rect.bottom = HEIGHT
             self.velocidad_vertical = 0 
+
         super().update()
     
     def draw(self, pantalla):
-        self.rect = self.imagen_caballero.get_rect(topleft=self.rect.topleft)
         pygame.draw.rect(pantalla, rojo, self.rect_mov)  
         pantalla.blit(self.imagen_caballero, self.rect)
 
@@ -74,6 +78,15 @@ class Personaje(pygame.sprite.Sprite):
             if self.mascara.overlap(enemigo.mascara, offset(self.rect, enemigo.rect)):
                 self.vida -= 10
 
+    def detecta_colisiones_coin(self, grupo_coins):
+        for coin in grupo_coins:
+            if self.mascara.overlap(coin.mascara, offset(coin.rect, self.rect)):
+                coin.kill()
+                self.puntaje += coin.puntaje
+                if coin.habilidad:
+                    self.habilidad = True
+
+
     def atacar(self):
         keys = pygame.key.get_pressed()
         if keys[K_a]:
@@ -95,12 +108,8 @@ class Personaje(pygame.sprite.Sprite):
 
 
     def disparar(self, x, y):
-        if self.direccion:
-            x += 10
-        else:
-            x -= 10
-        proyectil = Proyectil(x, y, self.direccion)
-        self.lista_disparo.append(proyectil)
+        self.proyectil = Proyectil(x, y, self.direccion)
+        self.lista_disparo.append(self.proyectil)
 
     def salto(self):
         self.velocidad_vertical = -17

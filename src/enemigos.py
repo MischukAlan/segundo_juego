@@ -35,8 +35,8 @@ class Enemigo(pygame.sprite.Sprite):
         pantalla.blit(self.imagen_enemigo, self.rect)
         pygame.draw.rect(pantalla, rojo, self.rect_mov)
 
-
-
+    # def contador (self, lista):
+        
 
 
 
