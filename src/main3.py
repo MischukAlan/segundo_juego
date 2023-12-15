@@ -4,16 +4,16 @@ from config_2 import *
 from pygame.locals import *
 from sprite_sheet import *
 from fondos import *
-# from personaje_salto import PersonajeSaltando
 from plataforma import Plataforma
 from enemigos import Enemigo
 from base import *
 from player import Personaje
 import os
 from objetos import Objeto
+from boton import *
 
 
-class Juego:
+class Level_2:
     def __init__(self):
         pygame.init()
         self.reloj = pygame.time.Clock()
@@ -71,11 +71,13 @@ class Juego:
                 "jump_izquierda": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Jump_izquierda.png").convert_alpha()),
                 "muerte": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Death.png").convert_alpha())}
         self.player = Personaje(self.player_group, self.personaje_caballero_sprites, VELOCIDAD, 120, 80, self.pantalla)
-        self.enemigo_1 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 2, 120, 80, 9, self.all_plataformas.sprites()[0])
-        self.enemigo_2 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 5, 120, 80, 9, self.all_plataformas.sprites()[3])
-        self.enemigo_3 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 5, 120, 80, 9, self.all_plataformas.sprites()[7])
-        self.enemigo_4 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 2, 120, 80, 9, self.all_plataformas.sprites()[10])
-        self.enemigo_5 = Enemigo(self.enemigos_group,{"idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/_Idle.png").convert_alpha())}, 5, 120, 80, 9, self.all_plataformas.sprites()[12])
+        self.imagen_enemigo = {"idle_izquierda": SpriteSheet(pygame.image.load("./src/assets_2/caballero/demon-idle.png").convert_alpha()), 
+                                "idle_derecha": SpriteSheet(pygame.image.load("./src/assets_2/caballero/demon-idle_derecha.png").convert_alpha())
+                                }
+        self.enemigo_1 = Enemigo([self.enemigos_group, self.all_sprites], self.imagen_enemigo, 2, 160, 144, 6, self.all_plataformas.sprites()[0])
+        self.enemigo_3 = Enemigo([self.enemigos_group, self.all_sprites], self.imagen_enemigo, 2, 160, 144, 6, self.all_plataformas.sprites()[7])
+        self.enemigo_4 = Enemigo([self.enemigos_group, self.all_sprites], self.imagen_enemigo, 2, 160, 144, 6, self.all_plataformas.sprites()[9])
+        self.enemigo_5 = Enemigo([self.enemigos_group, self.all_sprites], self.imagen_enemigo, 2, 160, 144, 6, self.all_plataformas.sprites()[12])
         self.player.rect.topleft = (CENTRO_PANTALLA_X - 60, HEIGHT - 80)
         self.posicion_X_pantalla = 0
         self.bandera = False
@@ -83,6 +85,7 @@ class Juego:
 
     def run(self):
         esta_jugando = True
+        self.player.correcion = 150
         while esta_jugando:
             self.tiempo_actual = pygame.time.get_ticks()
             self.FPS.tick(FPS)
@@ -92,6 +95,9 @@ class Juego:
                 elif evento.type == KEYDOWN:
                     if evento.key == K_ESCAPE:
                         esta_jugando = False
+                    if evento.key == K_p:
+                        if self.pausa():
+                            return
                     elif evento.key == K_d:
                         if self.player.habilidad:
                             if self.player.direccion:
@@ -120,13 +126,13 @@ class Juego:
             self.player.atacar()
             self.player.detecta_colisiones_ataque(self.enemigos_group)
 
-        print(self.player.rect_mov.center)
+        print(self.posicion_X_pantalla)
 
-        if self.player.rect_mov.right >= 500 and not self.posicion_X_pantalla == -1600 and keys[K_RIGHT]:
+        if self.player.rect_mov.right >= 500 and  self.posicion_X_pantalla >= -1600 and keys[K_RIGHT]:
             self.posicion_X_pantalla -= VELOCIDAD_FONDO
             Plataforma.ajustar_posicion_X_resta_plataforma(self.plataformas, VELOCIDAD_FONDO)
             Plataforma.ajustar_posicion_X_resta_plataforma(self.coins, VELOCIDAD_FONDO)
-            Enemigo.ajustar_posicion_X_resta_enemigo([self.enemigo_1, self.enemigo_2, self.enemigo_3, self.enemigo_4, self.enemigo_5], VELOCIDAD_FONDO)
+            Enemigo.ajustar_posicion_X_resta_enemigo([self.enemigo_1,  self.enemigo_3, self.enemigo_4, self.enemigo_5], VELOCIDAD_FONDO)
 
             
 
@@ -134,7 +140,7 @@ class Juego:
             self.posicion_X_pantalla += VELOCIDAD_FONDO
             Plataforma.ajustar_posicion_X_plataforma(self.plataformas, VELOCIDAD_FONDO)
             Plataforma.ajustar_posicion_X_plataforma(self.coins, VELOCIDAD_FONDO)
-            Enemigo.ajustar_posicion_X_enemigo([self.enemigo_1, self.enemigo_2, self.enemigo_3, self.enemigo_4, self.enemigo_5], VELOCIDAD_FONDO)
+            Enemigo.ajustar_posicion_X_enemigo([self.enemigo_1, self.enemigo_3, self.enemigo_4, self.enemigo_5], VELOCIDAD_FONDO)
 
         if self.tiempo_actual - self.ultima_actualizacion >= self.frames_juego:
             self.ultima_actualizacion = self.tiempo_actual
@@ -142,13 +148,15 @@ class Juego:
             for x in self.coins:
                 x.contador_frames = (x.contador_frames + 1) % x.cantidad_frames
             self.enemigo_1.contador_frames = (self.enemigo_1.contador_frames + 1) % self.enemigo_1.cantidad_frames
+            self.enemigo_3.contador_frames = (self.enemigo_3.contador_frames + 1) % self.enemigo_3.cantidad_frames
+            self.enemigo_4.contador_frames = (self.enemigo_4.contador_frames + 1) % self.enemigo_4.cantidad_frames
+            self.enemigo_5.contador_frames = (self.enemigo_5.contador_frames + 1) % self.enemigo_5.cantidad_frames
         
 
             
 
         self.player.detecta_colisiones_enemigos(self.enemigos_group)
         self.player.detecta_colisiones_coin(self.coin_grupos)
-        self.enemigos_group.update()
         self.player_group.update()
         self.all_sprites.update() 
         
@@ -171,7 +179,6 @@ class Juego:
                     self.player.lista_disparo.remove(x) 
 
         self.all_sprites.draw(self.pantalla)           
-        self.enemigos_group.draw(self.pantalla)
         self.player.draw(self.pantalla)
         
         for plataforma in self.all_plataformas:
@@ -187,6 +194,27 @@ class Juego:
         pygame.quit()
         exit()
 
-juego = Juego()
-juego.run()
+
+    def pausa(self):
+        while True:
+            reanudar = Boton(300, 100, 100,100, "reanudar", BLANCO, verde, rojo, None)
+            menu_principal = Boton(300, 300, 100,100, "Menu Principal", BLANCO, verde, rojo, None)
+            config = Boton(300, 500, 100,100, "Configuracion", BLANCO, verde, rojo, None)
+
+            mouse_x, mouse_y = pygame.mouse.get_pos()
         
+            reanudar.draw(self.pantalla)
+            menu_principal.draw(self.pantalla)
+            config.draw(self.pantalla)
+
+            pygame.display.flip()
+            for evento in pygame.event.get():
+                if evento.type == QUIT:
+                    exit()
+                elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                        if reanudar.rect.collidepoint(mouse_x, mouse_y):
+                            return False
+                        if config.rect.collidepoint(mouse_x, mouse_y):
+                            pass
+                        if menu_principal.rect.collidepoint(mouse_x, mouse_y):
+                            return True

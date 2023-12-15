@@ -48,6 +48,11 @@ class Plataforma (pygame.sprite.Sprite):
     def ajustar_posicion_y_resta(cls, velocidad, lista_plataformas):
         for plataforma in lista_plataformas:
             plataforma.rect.y -= velocidad
+            
+    @classmethod
+    def ajustar_posicion_y_suma(cls, velocidad, lista_plataformas):
+        for plataforma in lista_plataformas:
+            plataforma.rect.y += velocidad
 
 
     @classmethod
